@@ -38,7 +38,7 @@ export const Contact: React.FC = () => {
   };
 
   const handleDirectMailto = () => {
-    const recipient = personalInfo.email || "abderrezaksac@gmail.com";
+    const recipient = personalInfo.email || "abderrezaksc@gmail.com";
     const subject = encodeURIComponent(formData.subject || `Message from ${formData.name || 'Portfolio Visitor'}`);
     const body = encodeURIComponent(
       `Nom: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
@@ -66,7 +66,7 @@ export const Contact: React.FC = () => {
     setSendError(null);
     setIsSubmitting(true);
 
-    const recipientEmail = personalInfo.email || "abderrezaksac@gmail.com";
+    const recipientEmail = personalInfo.email || "abderrezaksc@gmail.com";
 
     try {
       const response = await fetch(`https://formsubmit.co/ajax/${recipientEmail}`, {

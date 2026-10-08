@@ -15,7 +15,7 @@ export const personalInfo: PersonalInfo = {
     fr: "Ingénieur en Informatique spécialisé dans le développement d'applications web modernes, solutions desktop, bases de données et infrastructure serveur.",
     ar: "مهندس في الإعلام الآلي متخصص في تطوير تطبيقات الويب الحديثة وبرمجيات سطح المكتب وهندسة قواعد البيانات والبنية التحتية للخوادم.",
   },
-  email: "abderrezaksac@gmail.com",
+  email: "abderrezaksc@gmail.com",
   phone: "07 80 41 23 78",
   whatsapp: "+213780412378",
   location: {
@@ -39,9 +39,9 @@ export const personalInfo: PersonalInfo = {
     }
   ],
   socials: {
-    github: "https://github.com/abderrezaksac", // easily customizable
-    linkedin: "https://www.linkedin.com/in/abderrezak-sahnoune-chaouche", // easily customizable
-    email: "mailto:abderrezaksac@gmail.com",
+    github: "https://github.com/abderrezak1997",
+    linkedin: "https://www.linkedin.com/in/abderrezak-sahnoune-chaouche",
+    email: "mailto:abderrezaksc@gmail.com",
     whatsapp: "https://wa.me/213780412378",
     phone: "tel:+213780412378",
   },
@@ -62,7 +62,7 @@ export const projects: Project[] = [
     technologies: ["React.js", "JavaScript", "Python", "Django", "PostgreSQL", "Nginx", "VM Linux"],
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
     demoUrl: "https://civilsociety.marsad.dz",
-    githubUrl: "https://github.com/abderrezaksac/civil-society-platform",
+    githubUrl: "https://github.com/abderrezak1997/civil-society-platform",
     description: {
       en: "Official nationwide digital platform for the Algerian Civil Society Observatory, digitizing core public interactions and civic engagement services.",
       fr: "Plateforme numérique officielle dédiée à l'Observatoire National de la Société Civile permettant la digitalisation de plusieurs services et interactions citoyennes.",
@@ -102,7 +102,7 @@ export const projects: Project[] = [
     technologies: ["React.js", "Django", "Python", "PostgreSQL", "REST API", "Tailwind CSS"],
     image: "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80",
     demoUrl: "https://civilsociety.marsad.dz/donors",
-    githubUrl: "https://github.com/abderrezaksac/blood-donors-platform",
+    githubUrl: "https://github.com/abderrezak1997/blood-donors-platform",
     description: {
       en: "Dedicated healthcare platform connecting voluntary blood donors with regional medical centers and urgent blood transfusion needs across the nation.",
       fr: "Plateforme solidaire de donneurs de sang reliant les donneurs volontaires aux centres médicaux et répondant aux urgences de transfusion sanguine.",
@@ -138,7 +138,7 @@ export const projects: Project[] = [
     featured: true,
     technologies: ["Python", "SQL", "Database Design", "Desktop GUI", "Reporting Engine"],
     image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1200&q=80",
-    githubUrl: "https://github.com/abderrezaksac/school-management-system",
+    githubUrl: "https://github.com/abderrezak1997/school-management-system",
     description: {
       en: "Comprehensive school management software automating student enrollment, academic records, grade transcripts, and administrative workflows.",
       fr: "Logiciel complet de gestion de scolarité pour collège (CEM) automatisant l'inscription des élèves, les relevés de notes et la gestion administrative.",
@@ -174,7 +174,7 @@ export const projects: Project[] = [
     featured: true,
     technologies: ["Python", "Machine Learning", "NLP", "Text Processing", "Data Science"],
     image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
-    githubUrl: "https://github.com/abderrezaksac/nlp-sarcasm-detection",
+    githubUrl: "https://github.com/abderrezak1997/nlp-sarcasm-detection",
     description: {
       en: "Natural Language Processing and Machine Learning model trained to identify sarcasm and nuanced linguistic sentiment in social media streams.",
       fr: "Modèle de Traitement Automatique du Langage Naturel (NLP) et Machine Learning entraîné pour détecter le sarcasme et les nuances sémantiques sur Twitter.",

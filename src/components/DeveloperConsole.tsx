@@ -185,7 +185,7 @@ export const DeveloperConsole: React.FC<DeveloperConsoleProps> = ({ isOpen, onCl
       case 'contact':
         resultNode = (
           <div className="font-mono text-xs sm:text-sm space-y-1.5 text-slate-300">
-            <p>📧 Email: <a href="mailto:abderrezaksac@gmail.com" className="text-cyan-300 hover:underline">abderrezaksac@gmail.com</a></p>
+            <p>📧 Email: <a href="mailto:abderrezaksc@gmail.com" className="text-cyan-300 hover:underline">abderrezaksc@gmail.com</a></p>
             <p>📞 Phone: <a href="tel:+213780412378" className="text-emerald-400 hover:underline">07 80 41 23 78</a></p>
             <p>💬 WhatsApp: <a href="https://wa.me/213780412378" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">+213 780 41 23 78</a></p>
             <p>🐙 GitHub: <a href={personalInfo.socials.github} target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">{personalInfo.socials.github}</a></p>
