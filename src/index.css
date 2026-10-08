@@ -146,3 +146,34 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* A4 Print Styles */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  .print-hidden,
+  header,
+  footer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  .cv-print-container {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}
