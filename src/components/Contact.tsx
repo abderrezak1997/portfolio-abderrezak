@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Send, Mail, Phone, MapPin, MessageSquare, 
-  CheckCircle2, AlertCircle, Sparkles, ExternalLink, Github, Linkedin
+  CheckCircle2, AlertCircle, Sparkles, ExternalLink, Github, Linkedin, MessageCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useLanguage } from '../context/LanguageContext';
@@ -22,6 +22,7 @@ export const Contact: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -30,13 +31,30 @@ export const Contact: React.FC = () => {
       errs.email = t.contact.validationEmail;
     }
     if (!formData.subject.trim()) errs.subject = t.contact.validationSubject;
-    if (!formData.message.trim() || formData.message.trim().length < 10) {
+    if (!formData.message.trim() || formData.message.trim().length < 5) {
       errs.message = t.contact.validationMessage;
     }
     return errs;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleDirectMailto = () => {
+    const recipient = personalInfo.email || "abderrezaksac@gmail.com";
+    const subject = encodeURIComponent(formData.subject || `Message from ${formData.name || 'Portfolio Visitor'}`);
+    const body = encodeURIComponent(
+      `Nom: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+    );
+    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+  };
+
+  const handleWhatsAppSend = () => {
+    const phone = personalInfo.whatsapp ? personalInfo.whatsapp.replace(/[^0-9]/g, '') : '213780412378';
+    const text = encodeURIComponent(
+      `Bonjour Abderrezak,\nJe m'appelle ${formData.name || 'Visiteur'}.\nSujet: ${formData.subject || 'Contact Portfolio'}\n\n${formData.message}`
+    );
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -45,30 +63,51 @@ export const Contact: React.FC = () => {
     }
 
     setErrors({});
+    setSendError(null);
     setIsSubmitting(true);
 
-    // Simulate reliable dispatch
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      
-      // Fire celebratory confetti!
-      try {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.7 },
-          colors: ['#00f2fe', '#8a2be2', '#00ffcc', '#ffffff']
-        });
-      } catch (err) {
-        // Safe fallback if canvas-confetti is not available
-      }
+    const recipientEmail = personalInfo.email || "abderrezaksac@gmail.com";
 
-      // Reset form after a while
-      setTimeout(() => {
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      }, 3000);
-    }, 1000);
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${recipientEmail}`, {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          _subject: `[Portfolio] ${formData.subject} - De: ${formData.name}`,
+          message: formData.message,
+          _template: "table",
+          _captcha: "false"
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok || data.success === "true" || data.success === true) {
+        setIsSubmitted(true);
+        try {
+          confetti({
+            particleCount: 90,
+            spread: 70,
+            origin: { y: 0.7 },
+            colors: ['#00f2fe', '#8a2be2', '#00ffcc', '#ffffff']
+          });
+        } catch (err) {}
+      } else {
+        throw new Error(data.message || "Échec de l'envoi");
+      }
+    } catch (err: any) {
+      console.warn("Direct form submit failed, providing mailto fallback:", err);
+      // Fallback: Open mailto directly
+      handleDirectMailto();
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -250,12 +289,21 @@ export const Contact: React.FC = () => {
                 <p className="text-sm text-slate-300 max-w-md mx-auto">
                   {t.contact.successMessage}
                 </p>
-                <button
-                  onClick={() => setIsSubmitted(false)}
-                  className="px-5 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-200 hover:text-white"
-                >
-                  Send another message
-                </button>
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => setIsSubmitted(false)}
+                    className="px-5 py-2.5 rounded-xl bg-slate-800 text-xs font-semibold text-slate-200 hover:text-white"
+                  >
+                    Envoyer un autre message
+                  </button>
+                  <button
+                    onClick={handleWhatsAppSend}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-semibold hover:text-white flex items-center gap-1.5"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Discuter sur WhatsApp</span>
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -361,21 +409,43 @@ export const Contact: React.FC = () => {
                   )}
                 </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-dark-950 font-extrabold text-sm shadow-[0_0_25px_rgba(0,242,254,0.35)] hover:shadow-[0_0_35px_rgba(0,242,254,0.55)] transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <span>{t.contact.sending}</span>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      <span>{t.contact.sendButton}</span>
-                    </>
-                  )}
-                </button>
+                {/* Action Buttons */}
+                <div className="space-y-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-dark-950 font-extrabold text-sm shadow-[0_0_25px_rgba(0,242,254,0.35)] hover:shadow-[0_0_35px_rgba(0,242,254,0.55)] transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span>{t.contact.sending}</span>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>{t.contact.sendButton}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={handleDirectMailto}
+                      className="text-cyan-400 hover:underline flex items-center gap-1 font-mono text-[11px]"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Ouvrir dans l'application Mail</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleWhatsAppSend}
+                      className="text-emerald-400 hover:underline flex items-center gap-1 font-mono text-[11px]"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>Envoyer via WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
               </form>
             )}
 
