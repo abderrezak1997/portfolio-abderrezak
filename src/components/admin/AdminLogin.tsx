@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  ShieldCheck, Lock, Key, ArrowLeft, Eye, EyeOff, 
-  AlertTriangle, Sparkles, Terminal, Phone, MessageSquare, CheckCircle2, RefreshCw
+  Lock, Key, ArrowLeft, Eye, EyeOff, 
+  AlertTriangle, Sparkles, Terminal, Phone, MessageSquare, CheckCircle2, RefreshCw, Send
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
@@ -199,7 +199,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                     <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Seul le numéro du développeur (<span className="text-cyan-400">0780412378</span>) peut recevoir le code.
+                    Seul le numéro du développeur (<span className="text-cyan-400 font-semibold">0780412378</span>) peut demander le code.
                   </p>
                 </div>
 
@@ -213,7 +213,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                   ) : (
                     <>
                       <MessageSquare className="w-4 h-4" />
-                      <span>Envoyer le code de vérification</span>
+                      <span>Générer le code de vérification (OTP)</span>
                     </>
                   )}
                 </button>
@@ -221,15 +221,52 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
             ) : (
               <form onSubmit={handleOtpSubmit} className="space-y-4">
                 <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-cyan-300 flex items-center justify-between">
-                  <span>Code envoyé au : <strong className="font-mono">{phoneNumber}</strong></span>
+                  <span>Code pour : <strong className="font-mono text-white">{phoneNumber}</strong></span>
                   <button
                     type="button"
                     onClick={() => setOtpStep('request')}
-                    className="text-slate-400 hover:text-white underline text-[11px]"
+                    className="text-cyan-400 hover:text-cyan-300 underline text-[11px]"
                   >
-                    Changer
+                    Changer de numéro
                   </button>
                 </div>
+
+                {/* Direct On-Screen Code Display Banner */}
+                {generatedCode && (
+                  <div className="p-4 rounded-2xl bg-slate-900/95 border border-cyan-400/50 shadow-[0_0_25px_rgba(0,242,254,0.25)] text-center space-y-2">
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-cyan-400 font-mono">
+                      <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                      <span>CODE DE SÉCURITÉ GÉNÉRÉ</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-3xl font-black font-mono tracking-[0.3em] text-cyan-300 bg-dark-950 px-5 py-2.5 rounded-xl border border-cyan-500/50 select-all shadow-inner">
+                        {generatedCode}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setOtpCode(generatedCode)}
+                        className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Insérer automatiquement ({generatedCode})</span>
+                      </button>
+
+                      <a
+                        href={`https://wa.me/213780412378?text=${encodeURIComponent(`🔐 Code de vérification Admin: ${generatedCode}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Ouvrir WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-mono text-slate-300 mb-1.5">
@@ -272,11 +309,15 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                     className="text-cyan-400 hover:underline flex items-center gap-1"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Renvoyer le code</span>
+                    <span>Nouveau code</span>
                   </button>
-                  <span className="text-slate-500 font-mono text-[11px]">
-                    PIN permanent: 784123
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setOtpCode('784123')}
+                    className="text-slate-400 hover:text-cyan-300 font-mono text-[11px] underline"
+                  >
+                    Code PIN Master : 784123
+                  </button>
                 </div>
               </form>
             )}
