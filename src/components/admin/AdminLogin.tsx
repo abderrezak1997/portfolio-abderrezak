@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Lock, Key, ArrowLeft, Eye, EyeOff, 
-  AlertTriangle, Sparkles, Terminal, Phone, MessageSquare, CheckCircle2, RefreshCw, Send
+  AlertTriangle, ShieldCheck, Terminal, Phone, CheckCircle2, RefreshCw, Send, Smartphone, BellRing
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { sendAdminOtpNotification } from '../../services/otpService';
 
 interface AdminLoginProps {
   onBackToSite: () => void;
@@ -20,34 +21,34 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
   const [phoneNumber, setPhoneNumber] = useState('0780412378');
   const [otpStep, setOtpStep] = useState<'request' | 'verify'>('request');
   const [otpCode, setOtpCode] = useState('');
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [isAttempting, setIsAttempting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   
   // Password state
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isAttempting, setIsAttempting] = useState(false);
 
-  // 1. Handle Phone Submission (Step 1)
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  // 1. Handle Phone Submission (Step 1: Request Code)
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim()) return;
-    setIsAttempting(true);
+    setIsSending(true);
+    clearError();
+    setStatusMessage(null);
 
-    setTimeout(() => {
-      const res = verifyPhoneNumber(phoneNumber);
-      if (res.success && res.code) {
-        setGeneratedCode(res.code);
-        setOtpStep('verify');
-        // Auto-open WhatsApp with the code for convenience
-        const cleanPhone = '213780412378';
-        const msg = encodeURIComponent(`🔐 Code de vérification Admin Portfolio: ${res.code}\n(Valable pour 0780412378)`);
-        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
-      }
-      setIsAttempting(false);
-    }, 400);
+    const res = verifyPhoneNumber(phoneNumber);
+    if (res.success && res.code) {
+      // Send OTP to user's phone / email notification silently without showing on screen
+      await sendAdminOtpNotification(res.code, phoneNumber);
+      
+      setOtpStep('verify');
+      setStatusMessage('تم إرسال رمز التحقق بنجاح إلى هاتفك! يرجى مراجعة إشعار الهاتف وكتابة الرمز هنا.');
+    }
+    setIsSending(false);
   };
 
-  // 2. Handle OTP Code Verification (Step 2)
+  // 2. Handle OTP Code Verification (Step 2: Verify Code from Phone)
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode.trim()) return;
@@ -56,7 +57,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
     setTimeout(() => {
       verifyOtpCode(otpCode);
       setIsAttempting(false);
-    }, 300);
+    }, 400);
   };
 
   // 3. Handle Direct Password Login
@@ -71,14 +72,16 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
     }, 400);
   };
 
-  const handleResendCode = () => {
+  // Resend code to phone
+  const handleResendCode = async () => {
+    setIsSending(true);
+    clearError();
     const res = verifyPhoneNumber(phoneNumber);
     if (res.success && res.code) {
-      setGeneratedCode(res.code);
-      const cleanPhone = '213780412378';
-      const msg = encodeURIComponent(`🔐 Nouveau code de sécurité Admin: ${res.code}`);
-      window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+      await sendAdminOtpNotification(res.code, phoneNumber);
+      setStatusMessage('تم إعادة إرسال رمز جديد إلى هاتفك الآن.');
     }
+    setIsSending(false);
   };
 
   return (
@@ -94,7 +97,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
         className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 text-xs font-mono transition-all z-20 backdrop-blur-md"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Return to Portfolio</span>
+        <span>العودة للموقع / Return</span>
       </button>
 
       {/* Login Card */}
@@ -107,7 +110,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
         {/* Header Icon */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 via-purple-600/20 to-blue-600/20 border border-cyan-400/50 flex items-center justify-center mb-3 shadow-[0_0_25px_rgba(0,242,254,0.3)]">
-            <Lock className="w-8 h-8 text-cyan-400" />
+            <ShieldCheck className="w-8 h-8 text-cyan-400" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
@@ -116,14 +119,14 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-cyan-400 mb-1">
             <Terminal className="w-3 h-3" />
-            <span>AUTHENTICATION PORTAL</span>
+            <span>2-FACTOR SECURITY PORTAL</span>
           </div>
 
           <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Admin Access Verification
+            بوابة تسجيل دخول المدير
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Accès sécurisé réservé à <span className="text-cyan-300 font-semibold">Abderrezak (0780412378)</span>
+            التحقق من الهوية مخصص للرقم <span className="text-cyan-300 font-semibold" dir="ltr">0780412378</span>
           </p>
         </div>
 
@@ -134,6 +137,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
             onClick={() => {
               setAuthMode('phone');
               clearError();
+              setStatusMessage(null);
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold transition-all ${
               authMode === 'phone'
@@ -141,8 +145,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Phone className="w-3.5 h-3.5" />
-            <span>Code Téléphone (OTP)</span>
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>رمز الهاتف (OTP)</span>
           </button>
 
           <button
@@ -150,6 +154,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
             onClick={() => {
               setAuthMode('password');
               clearError();
+              setStatusMessage(null);
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold transition-all ${
               authMode === 'password'
@@ -158,30 +163,42 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
             }`}
           >
             <Key className="w-3.5 h-3.5" />
-            <span>Mot de passe</span>
+            <span>كلمة المرور</span>
           </button>
         </div>
+
+        {/* Status Notification */}
+        {statusMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 text-xs flex items-center gap-2.5 mb-5 shadow-sm"
+          >
+            <BellRing className="w-4 h-4 text-cyan-400 shrink-0 animate-bounce" />
+            <span className="flex-1 leading-relaxed">{statusMessage}</span>
+          </motion.div>
+        )}
 
         {/* Error Notice */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3.5 rounded-xl bg-red-950/50 border border-red-500/50 text-red-300 text-xs flex items-center gap-2 mb-6"
+            className="p-3.5 rounded-xl bg-red-950/50 border border-red-500/50 text-red-300 text-xs flex items-center gap-2 mb-5"
           >
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span className="flex-1">{error}</span>
           </motion.div>
         )}
 
-        {/* MODE 1: Phone Code (OTP) */}
+        {/* MODE 1: Phone OTP Code (Sent to phone, NOT shown on screen) */}
         {authMode === 'phone' && (
           <div>
             {otpStep === 'request' ? (
               <form onSubmit={handlePhoneSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-mono text-slate-300 mb-1.5">
-                    Numéro de téléphone autorisé *
+                    رقم الهاتف المصرح به (0780412378)
                   </label>
                   <div className="relative">
                     <input
@@ -192,85 +209,58 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                         setPhoneNumber(e.target.value);
                         if (error) clearError();
                       }}
-                      placeholder="0780412378 ou +213780412378"
-                      className="w-full px-4 py-3 rounded-xl glass-input text-sm font-mono focus:border-cyan-400"
+                      placeholder="0780412378 أو +213780412378"
+                      className="w-full px-4 py-3 rounded-xl glass-input text-sm font-mono focus:border-cyan-400 text-left"
+                      dir="ltr"
                       autoFocus
                     />
                     <Phone className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Seul le numéro du développeur (<span className="text-cyan-400 font-semibold">0780412378</span>) peut demander le code.
+                    🔒 يتم إرسال رمز سري مكون من 6 أرقام مباشرة إلى هاتفك لتأكيد هويتك.
                   </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isAttempting}
+                  disabled={isSending}
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-dark-950 font-extrabold text-sm shadow-[0_0_25px_rgba(0,242,254,0.35)] hover:shadow-[0_0_35px_rgba(0,242,254,0.55)] transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50"
                 >
-                  {isAttempting ? (
-                    <span>Génération du code...</span>
+                  {isSending ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      جاري إرسال الكود إلى هاتفك...
+                    </span>
                   ) : (
                     <>
-                      <MessageSquare className="w-4 h-4" />
-                      <span>Générer le code de vérification (OTP)</span>
+                      <Send className="w-4 h-4" />
+                      <span>إرسال رمز التحقق إلى هاتفي 📱</span>
                     </>
                   )}
                 </button>
               </form>
             ) : (
               <form onSubmit={handleOtpSubmit} className="space-y-4">
-                <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-cyan-300 flex items-center justify-between">
-                  <span>Code pour : <strong className="font-mono text-white">{phoneNumber}</strong></span>
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-cyan-400" />
+                    <span>تم الإرسال إلى: <strong className="font-mono text-cyan-300" dir="ltr">{phoneNumber}</strong></span>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setOtpStep('request')}
+                    onClick={() => {
+                      setOtpStep('request');
+                      setStatusMessage(null);
+                    }}
                     className="text-cyan-400 hover:text-cyan-300 underline text-[11px]"
                   >
-                    Changer de numéro
+                    تغيير الرقم
                   </button>
                 </div>
 
-                {/* Direct On-Screen Code Display Banner */}
-                {generatedCode && (
-                  <div className="p-4 rounded-2xl bg-slate-900/95 border border-cyan-400/50 shadow-[0_0_25px_rgba(0,242,254,0.25)] text-center space-y-2">
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-cyan-400 font-mono">
-                      <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                      <span>CODE DE SÉCURITÉ GÉNÉRÉ</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-3xl font-black font-mono tracking-[0.3em] text-cyan-300 bg-dark-950 px-5 py-2.5 rounded-xl border border-cyan-500/50 select-all shadow-inner">
-                        {generatedCode}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setOtpCode(generatedCode)}
-                        className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Insérer automatiquement ({generatedCode})</span>
-                      </button>
-
-                      <a
-                        href={`https://wa.me/213780412378?text=${encodeURIComponent(`🔐 Code de vérification Admin: ${generatedCode}`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Ouvrir WhatsApp</span>
-                      </a>
-                    </div>
-                  </div>
-                )}
-
                 <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1.5">
-                    Entrez le code de vérification à 6 chiffres
+                  <label className="block text-xs font-mono text-slate-300 mb-1.5 text-center">
+                    أدخل الرمز المكون من 6 أرقام الذي وصلك على الهاتف:
                   </label>
                   <input
                     type="text"
@@ -281,23 +271,30 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                       setOtpCode(e.target.value);
                       if (error) clearError();
                     }}
-                    placeholder="Ex: 784123"
-                    className="w-full px-4 py-3.5 rounded-xl glass-input text-center text-xl tracking-[0.3em] font-mono font-bold focus:border-cyan-400 text-cyan-300"
+                    placeholder="______"
+                    className="w-full px-4 py-3.5 rounded-xl glass-input text-center text-2xl tracking-[0.4em] font-mono font-bold focus:border-cyan-400 text-cyan-300"
                     autoFocus
+                    dir="ltr"
                   />
+                  <p className="text-[11px] text-slate-400 text-center mt-1.5">
+                    تفقد إشعارات هاتفك / بريدك للحصول على الرمز.
+                  </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isAttempting}
+                  disabled={isAttempting || !otpCode.trim()}
                   className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-dark-950 font-extrabold text-sm shadow-[0_0_25px_rgba(0,242,254,0.35)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isAttempting ? (
-                    <span>Vérification...</span>
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      جاري التحقق من الرمز...
+                    </span>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Valider & Accéder à l'Admin</span>
+                      <span>تأكيد الرمز والدخول إلى لوحة التحكم</span>
                     </>
                   )}
                 </button>
@@ -306,17 +303,18 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                   <button
                     type="button"
                     onClick={handleResendCode}
-                    className="text-cyan-400 hover:underline flex items-center gap-1"
+                    disabled={isSending}
+                    className="text-cyan-400 hover:underline flex items-center gap-1 disabled:opacity-50"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Nouveau code</span>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSending ? 'animate-spin' : ''}`} />
+                    <span>إعادة إرسال الرمز</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setOtpCode('784123')}
-                    className="text-slate-400 hover:text-cyan-300 font-mono text-[11px] underline"
+                    onClick={() => setAuthMode('password')}
+                    className="text-slate-400 hover:text-white underline text-[11px]"
                   >
-                    Code PIN Master : 784123
+                    الدخول بكلمة المرور
                   </button>
                 </div>
               </form>
@@ -329,7 +327,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-mono text-slate-300 mb-1.5">
-                Master Password / Clé d'accès
+                كلمة المرور الرئيسية (Master Password)
               </label>
               <div className="relative">
                 <input
@@ -339,8 +337,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
                     setPassword(e.target.value);
                     if (error) clearError();
                   }}
-                  placeholder="Entrez le mot de passe (défaut: sac2026)..."
-                  className="w-full px-4 py-3 pr-11 rounded-xl glass-input text-sm font-mono focus:border-cyan-400"
+                  placeholder="أدخل كلمة المرور..."
+                  className="w-full px-4 py-3 pr-11 rounded-xl glass-input text-sm font-mono focus:border-cyan-400 text-left"
+                  dir="ltr"
                   autoFocus
                 />
                 <button
@@ -355,15 +354,15 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
 
             <button
               type="submit"
-              disabled={isAttempting}
+              disabled={isAttempting || !password.trim()}
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-extrabold text-sm shadow-[0_0_25px_rgba(168,85,247,0.35)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isAttempting ? (
-                <span>Vérification...</span>
+                <span>جاري التحقق...</span>
               ) : (
                 <>
                   <Key className="w-4 h-4" />
-                  <span>Déverrouiller avec mot de passe</span>
+                  <span>دخول بكلمة المرور</span>
                 </>
               )}
             </button>
@@ -373,7 +372,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBackToSite }) => {
         {/* Security Info Footnote */}
         <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
           <p className="text-[11px] font-mono text-slate-400">
-            🔒 Numéro vérifié : <span className="text-cyan-400 font-bold">+213 780 41 23 78</span>
+            🔒 هاتف معتمد: <span className="text-cyan-400 font-bold" dir="ltr">+213 780 41 23 78</span>
           </p>
         </div>
       </motion.div>
